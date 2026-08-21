@@ -1,8 +1,8 @@
 class Manuvra < Formula
   desc "Shell-driven Chrome and native macOS control for coding agents"
   homepage "https://github.com/taecontrol/manuvra"
-  url "https://github.com/taecontrol/manuvra/releases/download/v0.2.1/manuvra-0.2.1.tar.gz"
-  sha256 "a1ac7518cf5b0c15e6f410e7d23e8219f5728e535ab1843cfcd13f313c7956e9"
+  url "https://github.com/taecontrol/manuvra/releases/download/v0.2.2/manuvra-0.2.2.tar.gz"
+  sha256 "30c6726b2285e03f0acf22464e5aa9d28177bd225876e10a25e4034dd8c7ad2c"
   license "MIT"
 
   depends_on "rust" => :build
