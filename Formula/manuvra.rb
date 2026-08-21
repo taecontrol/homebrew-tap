@@ -1,8 +1,8 @@
 class Manuvra < Formula
   desc "Shell-driven Chrome and native macOS control for coding agents"
   homepage "https://github.com/taecontrol/manuvra"
-  url "https://github.com/taecontrol/manuvra/releases/download/v0.2.0/manuvra-0.2.0.tar.gz"
-  sha256 "fd01e134ee83e6d02559efc0c4d6c38aff6a06c0a89730915e37a7e2a15bf11f"
+  url "https://github.com/taecontrol/manuvra/releases/download/v0.2.1/manuvra-0.2.1.tar.gz"
+  sha256 "a1ac7518cf5b0c15e6f410e7d23e8219f5728e535ab1843cfcd13f313c7956e9"
   license "MIT"
 
   depends_on "rust" => :build
@@ -11,6 +11,7 @@ class Manuvra < Formula
 
   def install
     odie "Manuvra supports Apple Silicon only" unless Hardware::CPU.arm?
+    ENV.delete("MANUVRA_CODESIGN_IDENTITY")
     system "./scripts/package-manuvra.sh", "--prefix", prefix
   end
 
