@@ -2,7 +2,9 @@ name: ci
 
 on:
   pull_request:
-    paths: [Formula/manuvra.rb]
+    paths:
+      - .github/workflows/ci.yml
+      - Formula/manuvra.rb
 
 permissions:
   contents: read
@@ -21,8 +23,14 @@ jobs:
           brew trust --formula taecontrol/tap/manuvra
           brew audit --strict --online --tap taecontrol/tap
           brew install --formula taecontrol/tap/manuvra
-          test "$(manuvra commands list --limit 1 | wc -c)" -le 4096
-          test "$(manuvra daemon status | wc -c)" -le 4096
-          codesign --verify --deep --strict --verbose=2 "$(brew --prefix manuvra)/libexec/Manuvra.app"
-          manuvra daemon stop
+          if version_json=$(manuvra version 2>/dev/null); then
+            formula_version=$(brew info --json=v2 taecontrol/tap/manuvra | python3 -c 'import json, sys; print(json.load(sys.stdin)["formulae"][0]["versions"]["stable"])')
+            test "$(python3 -c 'import json, sys; print(json.load(sys.stdin)["version"])' <<< "$version_json")" = "$formula_version"
+            manuvra schema job | python3 -c 'import json, sys; assert json.load(sys.stdin)["title"] == "Job"'
+          else
+            test "$(manuvra commands list --limit 1 | wc -c)" -le 4096
+            test "$(manuvra daemon status | wc -c)" -le 4096
+            codesign --verify --deep --strict --verbose=2 "$(brew --prefix manuvra)/libexec/Manuvra.app"
+            manuvra daemon stop
+          fi
           brew uninstall manuvra
