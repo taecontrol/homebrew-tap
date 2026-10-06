@@ -4,33 +4,46 @@ on:
   pull_request:
     paths:
       - .github/workflows/ci.yml
-      - Formula/manuvra.rb
+      - Formula/*.rb
 
 permissions:
   contents: read
 
 jobs:
+  # Branch protection requires this exact check name, so the job loops over
+  # formulae instead of using a matrix, which would rename it.
   formula:
     runs-on: macos-26
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
+          fetch-depth: 0
           persist-credentials: false
-      - name: Audit, install, verify, and uninstall
+      - name: Audit, install, verify, and uninstall every changed formula
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          brew tap --custom-remote taecontrol/tap "$GITHUB_WORKSPACE"
-          brew trust --formula taecontrol/tap/manuvra
-          brew audit --strict --online --tap taecontrol/tap
-          brew install --formula taecontrol/tap/manuvra
-          if version_json=$(manuvra version 2>/dev/null); then
-            formula_version=$(brew info --json=v2 taecontrol/tap/manuvra | python3 -c 'import json, sys; print(json.load(sys.stdin)["formulae"][0]["versions"]["stable"])')
-            test "$(python3 -c 'import json, sys; print(json.load(sys.stdin)["version"])' <<< "$version_json")" = "$formula_version"
-            manuvra schema job | python3 -c 'import json, sys; assert json.load(sys.stdin)["title"] == "Job"'
+          # A workflow change re-checks every formula; otherwise only the changed ones.
+          if git diff --name-only "$BASE_SHA" HEAD | grep -qx .github/workflows/ci.yml; then
+            formulae=$(ls Formula/*.rb)
           else
-            test "$(manuvra commands list --limit 1 | wc -c)" -le 4096
-            test "$(manuvra daemon status | wc -c)" -le 4096
-            codesign --verify --deep --strict --verbose=2 "$(brew --prefix manuvra)/libexec/Manuvra.app"
-            manuvra daemon stop
+            formulae=$(git diff --name-only --diff-filter=AM "$BASE_SHA" HEAD -- 'Formula/*.rb')
           fi
-          brew uninstall manuvra
+          test -n "$formulae"
+          brew tap --custom-remote taecontrol/tap "$GITHUB_WORKSPACE"
+          for path in $formulae; do
+            name=$(basename "$path" .rb)
+            echo "::group::$name"
+            brew trust --formula "taecontrol/tap/$name"
+            brew audit --strict --online --formula "taecontrol/tap/$name"
+            brew install --formula "taecontrol/tap/$name"
+            formula_version=$(brew info --json=v2 "taecontrol/tap/$name" | python3 -c 'import json, sys; print(json.load(sys.stdin)["formulae"][0]["versions"]["stable"])')
+            cli_version=$("$name" version | python3 -c 'import json, sys; print(json.load(sys.stdin)["version"])')
+            test "$cli_version" = "$formula_version"
+            if [ "$name" = manuvra ]; then
+              manuvra schema job | python3 -c 'import json, sys; assert json.load(sys.stdin)["title"] == "Job"'
+            fi
+            brew uninstall "$name"
+            echo "::endgroup::"
+          done
