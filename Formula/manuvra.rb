@@ -5,9 +5,9 @@ class Manuvra < Formula
   sha256 "83d78622019e8d7d7fb209ce9ef929177a2e3b026d5c45498e917d83c6a4d79f"
   license "MIT"
 
-  depends_on :macos
   depends_on "cmake" => :build
   depends_on "rust" => :build
+  depends_on :macos
 
   def install
     system "cargo", "install", *std_cargo_args(path: "crates/manuvra-cli")
