@@ -1,8 +1,8 @@
 class Nook < Formula
   desc "Connect coding agents to your self-hosted Nook tools over MCP"
   homepage "https://github.com/taecontrol/nook"
-  url "https://github.com/taecontrol/nook/releases/download/v0.6.0/nook-0.6.0.tar.gz"
-  sha256 "6c80f8cbdd9873291f866407c7b6e87a4a85dad977ff7f5497dace2314f865b8"
+  url "https://github.com/taecontrol/nook/releases/download/v0.6.1/nook-0.6.1.tar.gz"
+  sha256 "fd2bb58617d8293e46396e17faf0f971934a9a4b6ab6d701ecaf8325026ab929"
   license "MIT"
 
   depends_on "pnpm" => :build
